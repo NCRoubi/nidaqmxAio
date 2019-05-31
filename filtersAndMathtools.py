@@ -1,4 +1,5 @@
 import numpy as np
+import math
 from scipy.optimize import curve_fit
 from scipy.signal import sosfilt, butter
 import scipy.signal as spSig
@@ -32,6 +33,41 @@ def dB_clipp(data, threshold):
     out = [Level[cut],data[cut],cut]
 
     return out
+
+def frequencyBand(x, b=1, G=10, fref = 1000.0):
+    """
+    Calculation of exact center frequeny and bandedge frequencies
+    acording to IEC 61260:1995
+
+    x: band index. typical ranges:
+                                octave bands = 24 to 34
+                                third octave bands 13 to 43
+    b: see b in standard (inverse of bandwidth designator)
+    G: octave ratio, only base 10 and 2 are supported
+    fref: reference frequency, usualy 1000 Hz
+
+    returns fm - midband frequency
+            f1 - lower bandedge frequency
+            f2 - upper bandedge frequency
+    """
+    if G == 10 : G = 10 ** (3 / 10)
+    if b%2 == 1: # odd
+        fm = fref * G**((x-30) / (b))
+    else:               # even
+        fm = fref * G**((2 * x - 59) / (2 *b))
+
+    f1 = fm * (G ** (-1 / (2 * b)))
+    f2 = fm * (G ** ( 1 / (2 * b)))
+    return fm, f1, f2
+
+def round_sigfigs(num, sig_figs):
+    """
+    Round to specified number of sigfigs.
+    """
+    if num != 0:
+        return round(num, -int(math.floor(math.log10(abs(num))) - (sig_figs - 1)))
+    else:
+        return 0  # Can't take the log of 0
 
 def lorentz(x, *p):
     '''

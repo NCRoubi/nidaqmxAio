@@ -35,7 +35,7 @@ if __name__ == '__main__':
     p.add("-pp", "--postProcess", help="Post processing type", type=str, choices={"TF", "RAC"})
     p.add("-cT", "--cutoffTime", help="Measurement time after the end of the signal, in s", type=int, default=0)
     p.add("-plt", "--plotting", help="Plots to display. Options: live, TF, timeSig, T60_one_band, T60_3rd", nargs='+', default=['live'])
-    p.add("-fRange", "--frequencyRange", help="Frequency range for postProcess calculation example \[fmin, fmax, bandwidth\]", nargs='+', default=[20, 10000, 'third'])
+    p.add("-fRange", "--frequencyRange", help="Frequency range for T60 calculations, example [fmin, fmax, bandwidth]", nargs='+', default=[20, 10000, 'third'])
     p.add("-refCh", "--refferenceChannel", help="Pre-specify which channel will be used as reference", default = "")
     p.add("-nt", "--note", help="Adds a text note to the save file.", type=str, default="")
 

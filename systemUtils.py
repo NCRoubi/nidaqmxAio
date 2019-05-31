@@ -1,4 +1,5 @@
 import os, errno
+from IPython.display import clear_output
 import glob
 import time as ti
 import scipy.io as sio
@@ -31,6 +32,7 @@ def fileSystem(directory, preSelect = ''):
             dir_names = []
             files_in_folder = [fn for fn in glob.glob(directory + '/*.np[yz]')
                                 if not os.path.basename(fn).endswith('_Cal.npy')]
+            clear_output()
             for name in os.listdir(path=directory):
                 # if name in excluded_options: continue
                 if (directory + "\\" + name) in files_in_folder:
@@ -151,7 +153,7 @@ def file_save(data, filename, directory, extension=[], options=[]):
         # Directory creation
         directory += "\\" + extension + "\\"
         create_dir(directory)
-        mat_directory = directory + "\\matLab_" + extension
+        mat_directory = directory + "matLab_" + extension
         create_dir(mat_directory)
         filename_out = directory + "\\" + filename.rsplit('\\', 1)[1].rsplit('.', 1)[0] + "_" + extension + "_" + currentDTime
         mat_filename_out = mat_directory + "\\" + filename.rsplit('\\', 1)[1].rsplit('.', 1)[0] + "_" + extension + "_" + currentDTime

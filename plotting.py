@@ -51,7 +51,7 @@ def singlePlot(plots):
 
     return
 
-def singlePlot_CI(plots):
+def singlePlot_CI(plots, export=True):
     """
     Outputs a single plot with arbitrary many lines of data,
     with their respective confidence intervals
@@ -62,6 +62,8 @@ def singlePlot_CI(plots):
               'yAxisTitle': 'H',
               'plotTitle': 'Plot title',
               'scale': 'lin' or 'log' or 'category' (for equally spaced bar plots)}
+    export: if True will export an html figure in the web browser. if false the function
+            will return the figure
 
     The each line of data should be registered to a key,
     named '0', '1', etc. The data assigned to the key should
@@ -114,9 +116,11 @@ def singlePlot_CI(plots):
         )
     )
     fig = go.Figure(data=trace, layout=layout)
-    py.plot(fig, filename=plots['plotTitle'] + '.html')
-
-    return
+    if export:
+        py.plot(fig, filename=plots['plotTitle'] + '.html')
+        return
+    else:
+        return fig
 
 def polarPlot(plots):
     """
