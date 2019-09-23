@@ -1,4 +1,6 @@
 import os, errno
+import os.path
+from pathlib import Path
 from IPython.display import clear_output
 import glob
 import time as ti
@@ -6,6 +8,10 @@ import scipy.io as sio
 from collections.abc import Mapping
 import numpy as np
 import math
+
+
+import ni_tools as ni
+import post_processing as pp
 
 def fileSystem(directory, preSelect = ''):
     '''
@@ -211,3 +217,71 @@ def sampleRateCorrection(input_sample_rate, fm=13.1072e6, use_only_int_sr=True):
 
     return corrected_sample_rate
 
+def calibrationFilesCheck(args, directory):
+    '''
+    Handles the calibration options for the nidaqmxAio through the command line.
+    Inputs:
+    - args: the parser arguments of the program
+    - directory: the directory that the function will check for calibration files
+    '''
+    if args.calibration == 'uncalibrated':
+        print('Calibration canceled by user.')
+        calibrationData = [1, 1]
+        return calibrationData, args
+
+    if args.calibration:
+        cal_postFilename = directory + "\\" + args.calibration + "_Cal"
+        cal_path = Path(cal_postFilename + ".npy")
+        if os.path.isfile(cal_path):
+            calibrationData = np.load(cal_postFilename + '.npy', allow_pickle=True)
+        else:
+            user_input = input("Calibration file '" + str(cal_path) + "' doesn't exist.\nPress <Enter> to continue without calibration, or <c> to calibrate and save:")
+            if user_input == 'c':
+                args.postProcess = []
+                args.newMeasurement = 0
+                meas = ni.ni_io_tf(args,cal=True)
+                calibrationData = pp.mic_calibration(meas, args.sensitivity)
+
+                simple_file_save(calibrationData, args.calibration + "_Cal", directory)
+
+
+            else:
+                print("No calibration data given")
+                calibrationData = [1, 1]
+    else:
+        pressent_calibration_files = [fn for fn in glob.glob(directory + '/*.np[yz]')
+                                      if os.path.basename(fn).endswith('_Cal.npy')]
+        if pressent_calibration_files:
+            print("\nPlease select an option:")
+            while True:
+                try:
+                    idx = 0
+                    dir_names = []
+                    clear_output()
+                    for name in os.listdir(path=directory):
+                        if (directory + "\\" + name) in pressent_calibration_files:
+                            print("[" + str(idx) + "]" + name)
+                        else:continue
+                        dir_names.append(name)
+                        idx += 1
+
+                    print("[" + str(idx) + "]No calibration.")
+                    selection = input()
+                    if not selection: selection = 0
+                    selection = int(selection)
+                    if selection == idx:
+                        print("No calibration data given")
+                        calibrationData = [1, 1]
+                        return calibrationData, args
+
+                    selected_calibration_file = directory + "\\" + dir_names[selection]
+                    calibrationData = np.load(selected_calibration_file, allow_pickle=True)
+                    break
+                except Exception:
+                    print('Please select one of the following')
+
+        else:
+            print("No calibration data given")
+            calibrationData = [1, 1]
+
+    return calibrationData, args

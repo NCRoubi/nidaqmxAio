@@ -28,6 +28,7 @@ if __name__ == '__main__':
     p.add("-aip", "--aiRange", help="Analog input absolute peak in Volts", type=float, default=5)
     p.add("-aop", "--aoRange", help="Analog output absolute peak in Volts", type=float, default=0.001)
     p.add("-sv", "--save_file", help="Exported data to filename.", type=str, default='measurement')
+    p.add("-dir", "--root_directory", help="Root directory, for processing and storing data.", type=str, default='acquired_data')
     p.add("-bf", "--bufferSize", help="Input buffer size in samples", type=int, default=8192)
     p.add("-cal", "--calibration", help="Specify the calibration file, if it does not exist, ask if a new calibration measurement is needed", type=str)
     p.add("-micA", "--micAmp", help="Specify the amplification factor of he microphone", type=float, default=1)
@@ -44,38 +45,14 @@ if __name__ == '__main__':
     # Print used arguments
     print(p.format_values())
     # Create directories for saving data
-    directory = "acquired_data"
-    meas_directory = "acquired_data\\measurement_"
-    Caldirectory = "acquired_data\\calibration_files"
+    directory = args.root_directory
+    meas_directory = directory + "\\measurement_"
     sy.create_dir(directory)
-    sy.create_dir(Caldirectory)
-
-    # Calibration. New calibration measurement or loading the calibration data
-    if args.calibration:
-        cal_postFilename = Caldirectory + "\\" + args.calibration + "_Cal"
-        cal_path = Path(cal_postFilename + ".npy")
-        if os.path.isfile(cal_path):
-            calibrationData = np.load(cal_postFilename + '.npy')
-        else:
-            user_input = input("Calibration file '" + str(cal_path) + "' doesn't exist.\nPress <Enter> to continue without calibration, or <c> to calibrate and save:")
-            if user_input == 'c':
-                args.postProcess = []
-                args.newMeasurement = 0
-                meas = ni.ni_io_tf(args,cal=True)
-                calibrationData = pp.mic_calibration(meas, args.sensitivity)
-
-                sy.simple_file_save(calibrationData, args.calibration + "_Cal", Caldirectory)
-
-
-            else:
-                print("No calibration data given")
-                calibrationData = [1, 1]
-    else:
-        print("No calibration data given")
-        calibrationData = [1, 1]
 
     # New measurement
     if args.newMeasurement == 1:
+        # Calibration
+        calibrationData, args = sy.calibrationFilesCheck(args, meas_directory)
         meas = ni.ni_io_tf(args, calibrationData)
         # Save the new measurement
         filenames, meas_directory = sy.file_save(meas, args.save_file, meas_directory, options=p.format_values())
@@ -86,6 +63,8 @@ if __name__ == '__main__':
         if args.newMeasurement == 0:
             # Choosing the directory and the files
             filenames, selected_directory = sy.fileSystem(directory)
+            # Calibration
+            calibrationData, args = sy.calibrationFilesCheck(args, selected_directory)
         else:
             selected_directory = meas_directory
             filenames = [filenames + ".npy"]

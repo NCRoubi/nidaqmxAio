@@ -143,7 +143,7 @@ def butterWorthFilter(in_data, sr, frequecies=[], order=3, filter_type='highpass
         sos = spSig.tf2sos(b, a)
     elif method == 'zpk':
         z, p, k = butter(order, w, btype=filter_type, output='zpk')
-        sos = spSig.zpk2sos(z, p,k)
+        sos = spSig.zpk2sos(z, p, k)
     elif method == 'sos':
         sos = butter(order, w, btype=filter_type, output='sos')
     else:

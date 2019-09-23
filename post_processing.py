@@ -29,7 +29,7 @@ def TFcalc(filename, blockSize, calibrationData, plotting):
 
     # Reading the configuration
     print("Importing raw data... ", end="")
-    inputfile = np.load(filename)
+    inputfile = np.load(filename, allow_pickle=True)
     measurements = inputfile.item()
     measuredFRFs = measurements
     simTime = measurements["simulationTime"]
@@ -100,6 +100,20 @@ def TFcalc(filename, blockSize, calibrationData, plotting):
             pbar2.update()
         pbar2.close()
 
+        # Removing the redundant information
+        H = np.delete(H, (refCH), axis=0)
+        HD = np.delete(HD, (refCH), axis=0)
+        HdB = np.delete(HdB, (refCH), axis=0)
+        H_phase = np.delete(H_phase, (refCH), axis=0)
+        IR = np.delete(IR, (refCH), axis=0)
+        gamma2 = np.delete(gamma2, (refCH), axis=0)
+        SNR = np.delete(SNR, (refCH), axis=0)
+
+        # Removing duplicate raw data from the file
+        dataChannels = [s1 for s1 in measurements.keys() if "cDAQ" in s1]
+        for dataChannel in dataChannels: measuredFRFs.pop(dataChannel, None)
+        measuredFRFs.pop('Unpadded_signal', None)
+
         # Saving the data
         print("Saving the processed data... ", end="")
         fftfreq = np.fft.rfftfreq(blockSize, 1 / sr)
@@ -116,10 +130,24 @@ def TFcalc(filename, blockSize, calibrationData, plotting):
         print("Starting frequency f0 = %i Hz" % f0 )
         print("Ending frequency f1 = %i Hz" % f1 )
 
-        #Main calculations
+        # Main calculations
         print("Processing the data...", end="")
         H, HD, HdB, H_phase, IR, fftfreq, tVec, spectrogramm = TF.deconvolution(data, sr, blockSize, calibrationData, micAmp, refCH, f0, f1)
         print("Completed")
+
+        # Removing the redundant information
+        H = np.delete(H, (refCH), axis=0)
+        HD = np.delete(HD, (refCH), axis=0)
+        HdB = np.delete(HdB, (refCH), axis=0)
+        H_phase = np.delete(H_phase, (refCH), axis=0)
+        IR = np.delete(IR, (refCH), axis=0)
+        spectrogramm = np.delete(spectrogramm, (refCH), axis=0)
+
+
+        # Removing duplicate raw data from the file
+        dataChannels = [s1 for s1 in measurements.keys() if "cDAQ" in s1]
+        for dataChannel in dataChannels: measuredFRFs.pop(dataChannel, None)
+        measuredFRFs.pop('Unpadded_signal', None)
 
         # Saving the data
         print("Saving the processed data... ", end="")
@@ -129,9 +157,9 @@ def TFcalc(filename, blockSize, calibrationData, plotting):
 
     # Plotting
     if 'TF' in plotting:
-        for pltidx in range(nCHin):
-            if pltidx == refCH:
-                continue
+        for pltidx in range(nCHin-1):
+            # if pltidx == refCH:
+                # continue
             if ("noise" in signalType[0]):
                 plots = {'TF':[fftfreq, HdB[pltidx, :]],
                          'gamma2':[fftfreq, gamma2[pltidx, :]],
@@ -172,16 +200,16 @@ def RAC(filename, blockSize, f_min, f_max, bandWidth, calibrationData, plotting)
     fVec = measurements["fftfreq"]
     print("Completed")
 
-    # Reading the configuration
-    print("Reading the configuration...", end="")
-    keys = list(measurements.keys())
-    dataCH = [i1 for i1, s1 in enumerate(keys) if "cDAQ" in s1]
-    firstCH = dataCH[0]
-    lastCH = dataCH[-1]
-    keys = keys[firstCH:lastCH+1]
-    refCH = [i2 for i2, s2 in enumerate(keys) if measurements['Reference_channel'] in s2][0]
-    IR = np.delete(IR, (refCH), axis=0)
-    print("completed")
+    # # Reading the configuration
+    # print("Reading the configuration...", end="")
+    # keys = list(measurements.keys())
+    # dataCH = [i1 for i1, s1 in enumerate(keys) if "cDAQ" in s1]
+    # firstCH = dataCH[0]
+    # lastCH = dataCH[-1]
+    # keys = keys[firstCH:lastCH+1]
+    # refCH = [i2 for i2, s2 in enumerate(keys) if measurements['Reference_channel'] in s2][0]
+    # IR = np.delete(IR, (refCH), axis=0)
+    # print("completed")
 
 
     db = lambda x: flm.NormAmp2dB(x)

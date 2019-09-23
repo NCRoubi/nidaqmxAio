@@ -1,7 +1,7 @@
 import numpy as np
 import plotly.offline as py
 import plotly.graph_objs as go
-from plotly import tools
+from plotly import subplots
 from pyqtgraph.Qt import QtGui, QtCore
 import pyqtgraph as pg
 
@@ -57,7 +57,7 @@ def singlePlot_CI(plots, export=True):
     with their respective confidence intervals
     The data should be given in a dictionary formated as:
 
-    plots = {'0':[tVec, mean, lower CI, upper CI, 'Impulse Response','bar' or 'scatter'],
+    plots = {'0':[tVec, mean, lower CI, upper CI, 'Impulse Response','bar', 'barVar' (for bar plots with certain width) or 'scatter'],
               'xAxisTitle': 'frequency in Hz',
               'yAxisTitle': 'H',
               'plotTitle': 'Plot title',
@@ -89,6 +89,20 @@ def singlePlot_CI(plots, export=True):
                     arrayminus = plots[str(idx)][2]
                 )
             ))
+        elif plots[str(idx)][5] == 'barVar':
+            trace.append(go.Bar(
+                x = plots[str(idx)][0],
+                y = plots[str(idx)][1],
+                name = plots[str(idx)][4],
+                width = plots[str(idx)][6],
+                error_y = dict(
+                    type = 'data',
+                    symmetric=False,
+                    array = plots[str(idx)][3],
+                    arrayminus = plots[str(idx)][2]
+                )
+            ))
+
         else:
             trace.append(go.Scatter(
             x = plots[str(idx)][0],
@@ -220,9 +234,9 @@ def irSubPlot(plots, filename, title):
         )
 
     if ("gamma2" in plots.keys()):
-        fig = tools.make_subplots(rows=2, cols=2, subplot_titles=('HdB', 'gamma2', 'IR', 'H_phase'))
+        fig = subplots.make_subplots(rows=2, cols=2, subplot_titles=('HdB', 'gamma2', 'IR', 'H_phase'))
     elif ("spectrogram" in plots.keys()):
-        fig = tools.make_subplots(rows=2, cols=2, subplot_titles=('HdB', 'Spectrogram', 'IR', 'H_phase'))
+        fig = subplots.make_subplots(rows=2, cols=2, subplot_titles=('HdB', 'Spectrogram', 'IR', 'H_phase'))
 
     fig.append_trace(trace1, 1, 1)
     fig.append_trace(trace2, 1, 2)
@@ -234,16 +248,16 @@ def irSubPlot(plots, filename, title):
                              title=title,
                              xaxis1=dict(title='frequency in Hz', type='log', autorange=True),
                              xaxis2=dict(title='frequency in Hz', type='log', autorange=True),
-                             xaxis3=dict(title='time in s', type='lin', autorange=True),
+                             xaxis3=dict(title='time in s', type='linear', autorange=True),
                              xaxis4=dict(title='frequency in Hz', type='log', autorange=True)
         )
     elif ('spectrogram' in plots.keys()):
         fig['layout'].update(legend=dict(y=0.5),
                          title=title,
                          xaxis1=dict(title='frequency in Hz', type='log', autorange=True),
-                         xaxis2=dict(title='time in s', type='lin', autorange=True),
+                         xaxis2=dict(title='time in s', type='linear', autorange=True),
                          yaxis2=dict(title='frequency in Hz', type='log', autorange=True),
-                         xaxis3=dict(title='time in s', type='lin', autorange=True),
+                         xaxis3=dict(title='time in s', type='linear', autorange=True),
                          xaxis4=dict(title='frequency in Hz', type='log', autorange=True)
     )
     py.plot(fig, filename=filename + '.html')
